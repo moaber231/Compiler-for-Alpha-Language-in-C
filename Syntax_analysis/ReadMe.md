@@ -2,7 +2,7 @@ Phase 2: Syntax Analysis
 Navigate to the directory:
 
 ```bash
-cd phase2_syntax_analysis
+cd Syntax_analysis
 ```
 Run make to build the parser:
 
