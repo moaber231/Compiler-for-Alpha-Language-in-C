@@ -36,132 +36,135 @@ Project Structure
 ```
 Phase 1: Lexical Analysis
 Description
-In this phase, the lexical analyzer for the Alpha language is created using flex. The analyzer identifies tokens from the source code, such as keywords, operators, and identifiers. The output is the sequence of tokens printed to standard output.
+In this phase, we create a lexical analyzer (or lexer) for the Alpha language using the flex tool. The lexical analyzer processes the source code of Alpha programs, breaking it down into tokens. These tokens represent individual elements of the language, such as keywords (if, else, etc.), operators (+, -, *, /, etc.), identifiers (variable names, function names), and constants (numbers, strings). This is the first step of the compilation process, where the input program is scanned and broken down into a sequence of meaningful symbols for the next phase.
 
-Files
-scanner1.l: The lex file containing token definitions.
-list.c: A helper C file for managing token lists.
-Makefile
-makefile
+The scanner1.l file contains the rules and patterns that define how different tokens are identified.
+The tokens are printed to the console with details like line numbers and types.
+What Happens
 
-CC=gcc
-CFLAGS=-g
-LDFLAGS=-lfl
-OBJS=lex.alpha_yy.o list.o
+The lexer scans the input source code file and identifies tokens, such as keywords, operators, literals, and identifiers.
+Each recognized token is output, and its type is categorized (e.g., KEYWORD, IDENTIFIER, INTCONST).
+For example, if the input contains if (x > 5), it will output tokens for if, (, x, >, and 5.
 
-obj: lex
-	gcc -g list.o lex.alpha_yy.c -o lexer -lfl
-
-lex: scanner1.l
-	flex scanner1.l
-
-list: list.o
-	$(CC) $(CFLAGS) list.o
-
-%.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
 Phase 2: Syntax Analysis
 Description
-The syntax analysis phase introduces a parser for Alpha's grammar using bison. This parser checks for syntactic correctness and prints the grammar rules as they are applied. A symbol table is also created in this phase.
+In the syntax analysis phase, a parser is created using bison. The parser checks whether the token sequence produced by the lexer follows the syntactical rules (grammar) of the Alpha language. It performs a structured analysis of the program, verifying that tokens are arranged correctly to form valid statements, expressions, and program constructs.
 
-Files
-parser.y: Contains the grammar for Alpha and its rules.
-scanner1.l: The updated lexical analyzer for compatibility with the parser.
-symtablehash.c: Symbol table implementation.
-stack.c: Stack implementation for managing scopes.
-Makefile
-makefile
+This phase also introduces a symbol table to store variables, functions, and their scopes. The parser works with a defined grammar, identifying structures such as loops, conditionals, and function definitions.
 
-CC=gcc
-CFLAGS=-g
-LDFLAGS=-lfl
-BISONFLAGS=-d -v
-OBJS=scanner1.o parser.o list.o symtablehash.o stack.o
-EXEC=scanner
+What Happens
 
-all: $(EXEC)
-
-$(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-parser.tab.c parser.tab.h: parser.y
-	bison $(BISONFLAGS) parser.y
-
-scanner1.c: scanner1.l
-	flex -o scanner1.c scanner1.l
-
-clean:
-	rm -f $(EXEC) $(OBJS) scanner1.c parser.tab.c parser.tab.h
+The parser analyzes the sequence of tokens and verifies if they conform to the Alpha language's grammar rules.
+If an invalid token sequence (like an unclosed parenthesis) is found, an error is raised.
+For valid code, the parser outputs the applied grammar rules, indicating how the program is structured.
+A symbol table is generated, which keeps track of the variables, functions, and their properties (like their scope, type, and location).
 Phase 3: Intermediate Code Generation
 Description
-In this phase, we add semantic rules to the parser and generate intermediate code for Alpha programs. The output is stored in the quads.txt file.
+In this phase, we extend the parser to generate intermediate code. Intermediate code is a low-level representation of the source program, abstracted from the specifics of the target machine. This code is easier to optimize and can later be translated into machine code for different platforms.
 
-Files
-parser.y: Contains the grammar and semantic rules.
-expr.c: Handles the generation of intermediate code for expressions.
-Makefile
-makefile
+We use semantic rules to produce this intermediate code for expressions, statements, and control flows such as loops and conditionals. The output is written to a file called quads.txt in the form of quads (4-tuples), representing operations, operands, and results.
 
-CC=gcc
-CFLAGS=-g
-LDFLAGS=-lfl
-BISONFLAGS=-d -v
-OBJS=scanner.o parser.o src/list/list.o src/symtable/symtablehash.o src/stack/stack.o src/expr/expr.o
-EXEC=scanner
+What Happens
 
-all: $(EXEC)
+After successful parsing, the intermediate code generation process begins.
+For each statement and expression in the source program, the parser generates corresponding quad instructions (which consist of an operation, two operands, and a result).
+This phase handles expression evaluations, variable assignments, and flow control (if statements, loops).
+The generated intermediate code is saved in the quads.txt file, allowing for future optimizations or machine code generation.
+Example quad:
 
-$(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
-
-clean:
-	rm -f $(EXEC) $(OBJS) scanner.c parser.tab.c parser.tab.h parser.output
+```yaml
+1: ASSIGN x, 10  # Assigns the value 10 to x
+```
 Phase 4: Target Code Generation
 Description
-In this phase, we generate the target code for the Alpha virtual machine. The code is output in both binary and human-readable forms.
+In the target code generation phase, we convert the intermediate code into target code for the Alpha Virtual Machine (VM). This phase outputs instructions that a virtual machine can execute. The target code is generated both in a binary format (for execution) and a human-readable format (for debugging or review).
 
-Files
-vmarg.c: Responsible for generating target code for the virtual machine.
-Makefile
-makefile
+The goal is to translate each intermediate code quad into corresponding VM instructions, handling tasks like arithmetic operations, function calls, and memory management.
 
-CC=gcc
-CFLAGS=-g
-LDFLAGS=-lfl
-BISONFLAGS=-d -v
-OBJS=scanner.o parser.o src/list/list.o src/symtable/symtablehash.o src/stack/stack.o src/expr/expr.o src/vmarg/vmarg.o
-EXEC=scanner
+What Happens
 
-all: $(EXEC)
+Each intermediate code quad is translated into machine-like instructions that the Alpha Virtual Machine (AVM) can execute.
+The generated target code is produced in two formats: a binary version for execution and a textual version for easier debugging.
+The VM instructions handle operations such as addition, subtraction, jumps, and function calls.
+Example target code (human-readable form):
 
-$(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
+```yaml
+0: ASSIGN x, 10
+1: IF_EQ x, 10, L1  # Jump to label L1 if x equals 10
+```
 
-clean:
-	rm -f $(EXEC) $(OBJS) scanner.c parser.tab.c parser.tab.h parser.output
+Sure! Here's a detailed description of what happens in each phase of the compiler construction for the Alpha language, from Lexical Analysis to the Virtual Machine implementation.
+
+Phase 1: Lexical Analysis
+Description
+In this phase, we create a lexical analyzer (or lexer) for the Alpha language using the flex tool. The lexical analyzer processes the source code of Alpha programs, breaking it down into tokens. These tokens represent individual elements of the language, such as keywords (if, else, etc.), operators (+, -, *, /, etc.), identifiers (variable names, function names), and constants (numbers, strings). This is the first step of the compilation process, where the input program is scanned and broken down into a sequence of meaningful symbols for the next phase.
+
+The scanner1.l file contains the rules and patterns that define how different tokens are identified.
+The tokens are printed to the console with details like line numbers and types.
+What Happens
+
+The lexer scans the input source code file and identifies tokens, such as keywords, operators, literals, and identifiers.
+Each recognized token is output, and its type is categorized (e.g., KEYWORD, IDENTIFIER, INTCONST).
+For example, if the input contains if (x > 5), it will output tokens for if, (, x, >, and 5.
+Phase 2: Syntax Analysis
+Description
+In the syntax analysis phase, a parser is created using bison. The parser checks whether the token sequence produced by the lexer follows the syntactical rules (grammar) of the Alpha language. It performs a structured analysis of the program, verifying that tokens are arranged correctly to form valid statements, expressions, and program constructs.
+
+This phase also introduces a symbol table to store variables, functions, and their scopes. The parser works with a defined grammar, identifying structures such as loops, conditionals, and function definitions.
+
+What Happens
+
+The parser analyzes the sequence of tokens and verifies if they conform to the Alpha language's grammar rules.
+If an invalid token sequence (like an unclosed parenthesis) is found, an error is raised.
+For valid code, the parser outputs the applied grammar rules, indicating how the program is structured.
+A symbol table is generated, which keeps track of the variables, functions, and their properties (like their scope, type, and location).
+Phase 3: Intermediate Code Generation
+Description
+In this phase, we extend the parser to generate intermediate code. Intermediate code is a low-level representation of the source program, abstracted from the specifics of the target machine. This code is easier to optimize and can later be translated into machine code for different platforms.
+
+We use semantic rules to produce this intermediate code for expressions, statements, and control flows such as loops and conditionals. The output is written to a file called quads.txt in the form of quads (4-tuples), representing operations, operands, and results.
+
+What Happens
+
+After successful parsing, the intermediate code generation process begins.
+For each statement and expression in the source program, the parser generates corresponding quad instructions (which consist of an operation, two operands, and a result).
+This phase handles expression evaluations, variable assignments, and flow control (if statements, loops).
+The generated intermediate code is saved in the quads.txt file, allowing for future optimizations or machine code generation.
+Example quad:
+
+yaml
+
+1: ASSIGN x, 10  # Assigns the value 10 to x
+Phase 4: Target Code Generation
+Description
+In the target code generation phase, we convert the intermediate code into target code for the Alpha Virtual Machine (VM). This phase outputs instructions that a virtual machine can execute. The target code is generated both in a binary format (for execution) and a human-readable format (for debugging or review).
+
+The goal is to translate each intermediate code quad into corresponding VM instructions, handling tasks like arithmetic operations, function calls, and memory management.
+
+What Happens
+
+Each intermediate code quad is translated into machine-like instructions that the Alpha Virtual Machine (AVM) can execute.
+The generated target code is produced in two formats: a binary version for execution and a textual version for easier debugging.
+The VM instructions handle operations such as addition, subtraction, jumps, and function calls.
+Example target code (human-readable form):
+
+```yaml
+0: ASSIGN x, 10
+1: IF_EQ x, 10, L1  # Jump to label L1 if x equals 10
+```
 Phase 5: Virtual Machine
 Description
-This phase implements the Alpha Virtual Machine (AVM) to execute the target code generated in phase 4. It also includes the implementation of required library functions.
+In the final phase, we implement the Alpha Virtual Machine (AVM), which can execute the target code generated in the previous phase. The AVM is responsible for loading the binary target code, interpreting it, and executing the instructions step by step. This phase also includes the implementation of core library functions required for the language, such as print, input, and typeof.
 
-Files
-avm.c: Implements the virtual machine.
-Makefile
-makefile
+The AVM manages the program's memory, handles function calls, and executes the virtual instructions.
 
-CC=gcc
-CFLAGS=-g
-LDFLAGS=-lfl
-BISONFLAGS=-d -v
-OBJS=scanner.o parser.o src/list/list.o src/symtable/symtablehash.o src/stack/stack.o src/expr/expr.o src/vmarg/vmarg.o src/avm/avm.o
-EXEC=scanner
+What Happens
 
-all: $(EXEC)
+The AVM loads the binary target code and begins executing the virtual instructions.
+It simulates the behavior of a physical machine, handling operations like arithmetic, control flow (jumps, conditionals), function calls, and memory management.
+You can see the actual execution of your Alpha program, including outputs from functions like print.
+This phase brings the compiler to completion, allowing the compiled Alpha programs to run in a controlled virtual environment.
+Example of VM execution:
 
-$(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
-
-clean:
-	rm -f $(EXEC) $(OBJS) scanner.c parser.tab.c parser.tab.h parser.output
+A program containing print(x) would output the value of x to the terminal after being interpreted by the AVM.
+Each phase builds progressively on the previous one, starting with token recognition and culminating in full execution on the virtual machine. Each stage plays a vital role in the compiler pipeline, transforming high-level Alpha code into executable virtual machine code.
