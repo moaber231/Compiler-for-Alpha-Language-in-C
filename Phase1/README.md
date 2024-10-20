@@ -2,7 +2,7 @@ How to Run
 Phase 1: Lexical Analysis
 Navigate to the directory:
 ```bash
-cd phase1_lexical_analysis
+cd Lexical_analysis
 ```
 Run make to build the lexical analyzer:
 ```bash
