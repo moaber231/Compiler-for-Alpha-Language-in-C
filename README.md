@@ -3,7 +3,7 @@ Project Overview
 This project involves the creation of a compiler for the Alpha programming language, divided into five phases. Each phase builds on the previous, beginning with lexical analysis and culminating in the generation of target and virtual machine code. The compiler is implemented in C/C++ using tools like flex for lexical analysis and bison for syntax analysis.
 
 Project Structure
-scss
+```scss
 
 ├── Lexical_Analysisi
 │   ├── Makefile
@@ -33,6 +33,7 @@ scss
 │   ├── vmarg.c
 │   └── other supporting files
 └── README.md
+```
 Phase 1: Lexical Analysis
 Description
 In this phase, the lexical analyzer for the Alpha language is created using flex. The analyzer identifies tokens from the source code, such as keywords, operators, and identifiers. The output is the sequence of tokens printed to standard output.
